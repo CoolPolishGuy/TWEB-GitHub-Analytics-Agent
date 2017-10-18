@@ -1,6 +1,11 @@
+#!/usr/bin/env node
+
 const request = require('superagent');
-const credentialsGitHub = require('../github-credentials.json');
-const Storage = require('./storage.js');
+const Storage = require('../src/storage.js');
+
+const username = process.env.GITHUB_USERNAME;
+const token = process.env.GITHUB_TOKEN;
+const credentialsGitHub = { username, token };
 
 class Agent {
   constructor(credentials) {
