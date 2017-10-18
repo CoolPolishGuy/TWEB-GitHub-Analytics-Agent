@@ -10,7 +10,7 @@ describe('agent', () => {
     const agent = new Agent(credentials);
     agent.fetchAndProcessAllRepos(owner, (err, repos) => {
       should.not.exist(err);
-      repos.should.be.an('array');
+      should.exist(repos);
       done();
     });
   });
