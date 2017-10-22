@@ -40,7 +40,7 @@ class Agent {
           repos = repos.concat(reposInPage);
 
           let numberOfReposForWhichWeNeedToGetCommits = repos.length;
-          reposInPage.forEach((repo) => {
+          Array.prototype.forEach.call(reposInPage, (repo) => {
             const repoName = repo.name;
 
             this.fetchAndProcessAllCommits(owner, repoName, (err2, commits) => {
@@ -72,10 +72,10 @@ class Agent {
       .get(statsUrl)
       .auth(this.credentials.username, this.credentials.token)
       .end((err, res) => {
-        const StatsInPage = res.body;
+        const statsInPage = res.body;
         let count = 1;
         let index = 0;
-        StatsInPage.forEach((week) => {
+        Array.prototype.forEach.call(statsInPage, (week) => {
           const days = week.days;
           for (let iter = 0; iter < 7; iter += 1) {
             statsDaysOfWeek[iter] += days[iter];
@@ -94,34 +94,37 @@ class Agent {
   }
 }
 
-const owner = 'youtube';
+const owners = ['SoftEng-HEIGVD', 'offensive-security', 'nationalsecurityagency', 'youtube'];
 const agent = new Agent(credentialsGitHub);
 
-agent.fetchAndProcessAllRepos(owner, (err, repos) => {
-  let reposInfo = [];
-  const info = {};
-  repos.forEach((repo) => {
-    const repoInfo = {};
-    repoInfo.name = repo.name;
-    repoInfo.commits = repo.commits.length;
-    reposInfo.push(repoInfo);
-  });
-  reposInfo = reposInfo.sort((a, b) => b.commits - a.commits);
-  reposInfo = reposInfo.slice(0, 5);
-  info.repoCommits = reposInfo;
-  agent.fetchStatsCommitActivity(owner, info.repoCommits[0].name, (err2, res) => {
-    info.stats = res;
-    const agentOwner = 'CoolPolishGuy';
-    const agentRepo = 'TWEB-GitHub-Analytics-Agent';
-    const publisher = new Storage(agentOwner, credentialsGitHub.token, agentRepo);
-    console.log(info);
-    publisher.publish('data/data.json', JSON.stringify(info), 'new version available', (error, result) => {
-      if (result) {
-        console.log('Data pushed');
-      } else {
-        console.log(`Sth bad happens : ${error.body}`);
-      }
+owners.forEach((owner) => {
+  agent.fetchAndProcessAllRepos(owner, (err, repos) => {
+    let reposInfo = [];
+    const info = {};
+    repos.forEach((repo) => {
+      const repoInfo = {};
+      repoInfo.name = repo.name;
+      repoInfo.commits = repo.commits.length;
+      reposInfo.push(repoInfo);
     });
+    reposInfo = reposInfo.sort((a, b) => b.commits - a.commits);
+    reposInfo = reposInfo.slice(0, 5);
+    info.repoCommits = reposInfo;
+    agent.fetchStatsCommitActivity(owner, info.repoCommits[0].name, (err2, res) => {
+      info.stats = res;
+      const agentOwner = 'CoolPolishGuy';
+      const agentRepo = 'TWEB-GitHub-Analytics-Agent';
+      const publisher = new Storage(agentOwner, credentialsGitHub.token, agentRepo);
+      console.log(info);
+      publisher.publish(`data/data_${owner}.json`, JSON.stringify(info), 'new version available', (error, result) => {
+        if (result) {
+          console.log(`Data ${owner} pushed`);
+        } else {
+          console.log(`Sth bad happens : ${error.body}`);
+        }
+      });
+    });
+    module.exports = Agent;
   });
-  module.exports = Agent;
 });
+
