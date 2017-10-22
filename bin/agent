@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 
 const request = require('superagent');
-const credentialsGitHub = require('../github-credentials.json');
 const Storage = require('../src/storage.js');
+
+const username = process.env.GITHUB_USERNAME;
+const token = process.env.GITHUB_TOKEN;
+const credentialsGitHub = { username, token };
 
 class Agent {
   constructor(credentials) {
@@ -117,6 +120,7 @@ owners.forEach((owner) => {
       const agentOwner = 'CoolPolishGuy';
       const agentRepo = 'TWEB-GitHub-Analytics-Agent';
       const publisher = new Storage(agentOwner, credentialsGitHub.token, agentRepo);
+      console.log(info);
       publisher.publish(`data/data_${owner}.json`, JSON.stringify(info), 'new version available', (error, result) => {
         if (result) {
           console.log(`Data ${owner} pushed`);
@@ -128,4 +132,3 @@ owners.forEach((owner) => {
     module.exports = Agent;
   });
 });
-
