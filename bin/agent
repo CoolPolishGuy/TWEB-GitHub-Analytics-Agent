@@ -3,6 +3,7 @@
 const request = require('superagent');
 const Storage = require('../src/storage.js');
 
+// heroku env variable
 const username = process.env.GITHUB_USERNAME;
 const token = process.env.GITHUB_TOKEN;
 const credentialsGitHub = { username, token };
@@ -12,10 +13,13 @@ class Agent {
     this.credentials = credentials;
   }
 
+  // fetch the commit number of the repo
   fetchAndProcessAllCommits(owner, repo, allCommitsAreAvailable) {
     let commits = [];
 
+    // if there is more than one page
     function fetchAndProcessPage(urlCommits, credentials) {
+      // request to the Github API
       request
         .get(urlCommits)
         .auth(credentials.username, credentials.token)
@@ -32,11 +36,13 @@ class Agent {
     fetchAndProcessPage.bind(this)(targetUrlCommits, this.credentials);
   }
 
+  // fetch all repos from a github owner
   fetchAndProcessAllRepos(owner, allReposAreAvailable) {
     const targetUrl = `https://api.github.com/users/${owner}/repos`;
     let repos = [];
 
     function fetchAndProcessPage(pageUrl, credentials) {
+      // request to the Github API
       request
         .get(pageUrl)
         .auth(credentials.username, credentials.token)
@@ -44,6 +50,7 @@ class Agent {
           const reposInPage = res.body;
           repos = repos.concat(reposInPage);
 
+          // to know how many repos are done
           let numberOfReposForWhichWeNeedToGetCommits = repos.length;
           Array.prototype.forEach.call(reposInPage, (repo) => {
             const repoName = repo.name;
@@ -52,6 +59,7 @@ class Agent {
               const repoToAugment = repo;
               repoToAugment.commits = commits;
               numberOfReposForWhichWeNeedToGetCommits -= 1;
+              // if all repos are fetched we call the callback function
               if (numberOfReposForWhichWeNeedToGetCommits === 0) {
                 allReposAreAvailable(null, repos);
               }
@@ -66,13 +74,16 @@ class Agent {
     fetchAndProcessPage.bind(this)(targetUrl, this.credentials);
   }
 
-
+  // fetch statistics about commit activity on a repo
   fetchStatsCommitActivity(owner, repo, statsAreAvailable) {
+    // number of commits during the days of week
     const statsDaysOfWeek = [0, 0, 0, 0, 0, 0, 0];
+    // number of commits during the last year cut in 4 parts (trimester)
     const statsTrimester = [0, 0, 0, 0];
 
     const statsUrl = `https://api.github.com/repos/${owner}/${repo}/stats/commit_activity`;
 
+    // request to the Github API
     request
       .get(statsUrl)
       .auth(this.credentials.username, this.credentials.token)
@@ -81,6 +92,7 @@ class Agent {
         let count = 1;
         let index = 0;
         Array.prototype.forEach.call(statsInPage, (week) => {
+          // eslint-disable-next-line
           const days = week.days;
           for (let iter = 0; iter < 7; iter += 1) {
             statsDaysOfWeek[iter] += days[iter];
@@ -99,8 +111,11 @@ class Agent {
   }
 }
 
+// Github owner to fetch
 const owners = ['SoftEng-HEIGVD', 'offensive-security', 'nationalsecurityagency', 'youtube'];
 const agent = new Agent(credentialsGitHub);
+// to keep controle on github publication
+let ready = true;
 
 owners.forEach((owner) => {
   agent.fetchAndProcessAllRepos(owner, (err, repos) => {
@@ -112,7 +127,9 @@ owners.forEach((owner) => {
       repoInfo.commits = repo.commits.length;
       reposInfo.push(repoInfo);
     });
+    // sort the repos with the most commits
     reposInfo = reposInfo.sort((a, b) => b.commits - a.commits);
+    // keep the 5 best repos
     reposInfo = reposInfo.slice(0, 5);
     info.repoCommits = reposInfo;
     agent.fetchStatsCommitActivity(owner, info.repoCommits[0].name, (err2, res) => {
@@ -120,14 +137,23 @@ owners.forEach((owner) => {
       const agentOwner = 'CoolPolishGuy';
       const agentRepo = 'TWEB-GitHub-Analytics-Agent';
       const publisher = new Storage(agentOwner, credentialsGitHub.token, agentRepo);
-      console.log(info);
-      publisher.publish(`data/data_${owner}.json`, JSON.stringify(info), 'new version available', (error, result) => {
-        if (result) {
-          console.log(`Data ${owner} pushed`);
-        } else {
-          console.log(`Sth bad happens : ${error.body}`);
-        }
-      });
+      let timer = 0;
+      if (ready === false) {
+        timer = 5000;
+      } else {
+        timer = 0;
+      }
+      ready = false;
+      setTimeout(() => {
+        publisher.publish(`data/data_${owner}.json`, JSON.stringify(info), `new version of ${owner} available`, (error, result) => {
+          if (result) {
+            console.log(`Data ${owner} pushed`);
+          } else {
+            console.log(`Sth bad happens with ${owner}: ${error.body}`);
+          }
+          ready = true;
+        });
+      }, timer);
     });
     module.exports = Agent;
   });

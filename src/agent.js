@@ -76,6 +76,7 @@ class Agent {
         let count = 1;
         let index = 0;
         Array.prototype.forEach.call(statsInPage, (week) => {
+          // eslint-disable-next-line
           const days = week.days;
           for (let iter = 0; iter < 7; iter += 1) {
             statsDaysOfWeek[iter] += days[iter];
@@ -96,6 +97,7 @@ class Agent {
 
 const owners = ['SoftEng-HEIGVD', 'offensive-security', 'nationalsecurityagency', 'youtube'];
 const agent = new Agent(credentialsGitHub);
+let ready = true;
 
 owners.forEach((owner) => {
   agent.fetchAndProcessAllRepos(owner, (err, repos) => {
@@ -116,13 +118,23 @@ owners.forEach((owner) => {
       const agentRepo = 'TWEB-GitHub-Analytics-Agent';
       const publisher = new Storage(agentOwner, credentialsGitHub.token, agentRepo);
       console.log(info);
-      publisher.publish(`data/data_${owner}.json`, JSON.stringify(info), 'new version available', (error, result) => {
-        if (result) {
-          console.log(`Data ${owner} pushed`);
-        } else {
-          console.log(`Sth bad happens : ${error.body}`);
-        }
-      });
+      let timer = 0;
+      if (ready === false) {
+        timer = 5000;
+      } else {
+        timer = 0;
+      }
+      ready = false;
+      setTimeout(() => {
+        publisher.publish(`data/data_${owner}.json`, JSON.stringify(info), `new version of ${owner} available`, (error, result) => {
+          if (result) {
+            console.log(`Data ${owner} pushed`);
+          } else {
+            console.log(`Sth bad happens with ${owner}: ${error.body}`);
+          }
+          ready = true;
+        });
+      }, timer);
     });
     module.exports = Agent;
   });
