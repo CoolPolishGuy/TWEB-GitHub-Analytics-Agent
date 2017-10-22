@@ -25,11 +25,12 @@ The fetched data will be used and displayed on the client-side.
 ### Local use
 1. Clone the repo.
 2. You need to create a file `github-credentials.json` ẁith your username on github and with a valid account token.
-
-    {
-    		"username" : "Blais..",
-    		"token" : "1234.."
-    }
+```
+{
+  "username" : "Blais..",
+  "token" : "1234.."
+}
+```
 3. Run the agent with node `node src/agent.js`
 
 ### Deployment on Heroku
