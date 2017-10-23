@@ -10,10 +10,10 @@ describe('Storage', () => {
     const content = {
       random: Math.random(),
     };
-    /*storage.publish('test.json', JSON.stringify(content), 'new version of the file', (err, result) => {
+    storage.publish('test.json', JSON.stringify(content), 'new version of the file', (err, result) => {
       should.not.exist(err);
       should.exist(result);
       done();
-    });*/
+    });
   });
 });

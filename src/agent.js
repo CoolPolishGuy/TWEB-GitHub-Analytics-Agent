@@ -72,25 +72,31 @@ class Agent {
       .get(statsUrl)
       .auth(this.credentials.username, this.credentials.token)
       .end((err, res) => {
-        const statsInPage = res.body;
-        let count = 1;
-        let index = 0;
-        Array.prototype.forEach.call(statsInPage, (week) => {
-          // eslint-disable-next-line
-          const days = week.days;
-          for (let iter = 0; iter < 7; iter += 1) {
-            statsDaysOfWeek[iter] += days[iter];
-          }
-          statsTrimester[index] += week.total;
-          if (count % 13 === 0) {
-            index += 1;
-          }
-          count += 1;
-        });
-        const result = {};
-        result.daysOfWeek = statsDaysOfWeek;
-        result.trimester = statsTrimester;
-        statsAreAvailable(null, result);
+        /* to correct a bug from the API if we contact the url for the first time we
+        will have a {} has response */
+        if (res.text === '{}') {
+          this.fetchStatsCommitActivity(owner, repo, statsAreAvailable);
+        } else {
+          const statsInPage = res.body;
+          let count = 1;
+          let index = 0;
+          Array.prototype.forEach.call(statsInPage, (week) => {
+            // eslint-disable-next-line
+            const days = week.days;
+            for (let iter = 0; iter < 7; iter += 1) {
+              statsDaysOfWeek[iter] += days[iter];
+            }
+            statsTrimester[index] += week.total;
+            if (count % 13 === 0) {
+              index += 1;
+            }
+            count += 1;
+          });
+          const result = {};
+          result.daysOfWeek = statsDaysOfWeek;
+          result.trimester = statsTrimester;
+          statsAreAvailable(null, result);
+        }
       });
   }
 }
@@ -136,7 +142,6 @@ owners.forEach((owner) => {
         });
       }, timer);
     });
-    module.exports = Agent;
   });
 });
-
+module.exports = Agent;
