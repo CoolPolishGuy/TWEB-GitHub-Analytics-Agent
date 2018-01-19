@@ -1,1 +1,1 @@
-{"repoCommits":[{"name":"h5vcc-web-platform-tests","commits":2461},{"name":"vitess","commits":2341},{"name":"YCSB","commits":878},{"name":"spfjs","commits":830},{"name":"api-samples","commits":463}],"stats":{"daysOfWeek":[0,0,0,0,0,0,0],"trimester":[0,0,0,0]}}
+{"repoCommits":[{"name":"vitess","commits":13726},{"name":"h5vcc-web-platform-tests","commits":9215},{"name":"YCSB","commits":878},{"name":"spfjs","commits":830},{"name":"api-samples","commits":463}],"stats":{"daysOfWeek":[127,249,330,294,269,292,105],"trimester":[534,250,486,396]}}
